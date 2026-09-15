@@ -15,6 +15,21 @@ from backend.models import (
 def _severity_rank(sev: str) -> int:
     return {"LOW": 1, "MEDIUM": 2, "HIGH": 3, "CRITICAL": 4}.get(sev, 0)
 
+def _as_aware_utc(dt: datetime) -> datetime:
+    """Coerce a datetime to timezone-aware UTC.
+
+    SQLite does not persist tzinfo even for columns declared
+    DateTime(timezone=True): values written as tz-aware come back
+    tz-naive after a round trip through the database. A freshly
+    created alert's timestamp (built in-process, still tz-aware)
+    can therefore end up being compared against an incident's
+    first_seen/last_seen loaded back from the DB (tz-naive), which
+    raises `TypeError: can't compare offset-naive and offset-aware
+    datetimes`. Normalising both sides here avoids that.
+    """
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
 
 def create_incident(
     session: Session,
@@ -61,10 +76,11 @@ def extend_incident(
     if _severity_rank(alert.severity) > _severity_rank(incident.overall_severity):
         incident.overall_severity = alert.severity
 
-    # Update timestamps
-    if alert.timestamp < incident.first_seen:
+        # Update timestamps (normalise both sides — see _as_aware_utc docstring)
+    alert_ts = _as_aware_utc(alert.timestamp)
+    if alert_ts < _as_aware_utc(incident.first_seen):
         incident.first_seen = alert.timestamp
-    if alert.timestamp > incident.last_seen:
+    if alert_ts > _as_aware_utc(incident.last_seen):
         incident.last_seen = alert.timestamp
 
     # Update affected assets
