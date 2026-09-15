@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: ./src
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8000:8000"
+    volumes:
+      - db_data:/app/data
+    environment:
+      - DATABASE_URL=sqlite:////app/data/infinity_threat.db
+      - BOB_API_KEY=${BOB_API_KEY:-}
+      - BOB_MCP_URL=http://localhost:8000
+      - API_KEY=${API_KEY:-dev-key-infinity}
+      - CORS_ORIGINS=http://localhost:3000,http://localhost:5173
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - FEED_SEED=${FEED_SEED:-}
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./src
+      dockerfile: Dockerfile.frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  db_data:

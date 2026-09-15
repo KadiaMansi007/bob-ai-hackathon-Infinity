@@ -1,47 +1,43 @@
-# Source Code
+# Infinity Threat Intelligence Fusion & Prioritisation Platform — Source Code
 
-Place all your project's source code in this folder.
+This directory contains all source code for the platform.
 
-## Structure Guidelines
+## Directory Structure
 
-Organize your code logically. Here are common patterns — use whatever fits
-your project:
-
-### Web Application
 ```
 src/
-  backend/        ← API server code
-  frontend/       ← UI code
-  shared/         ← Shared utilities/types
+├── backend/           # FastAPI application (Python 3.11)
+│   ├── models/        # SQLAlchemy ORM models (alerts, incidents, risk scores, etc.)
+│   ├── feeds/         # Synthetic feed generators (SIEM, cyber sensor, satellite, intel)
+│   ├── processing/    # Normaliser, deduplicator, FP pre-filter, auto-classifier
+│   ├── correlation/   # Correlation engine (rules C0–C5) and incident builder
+│   ├── scoring/       # Risk scoring engine (5-component weighted formula)
+│   ├── mitre/         # MITRE ATT&CK mapper (tactic → technique → sub-technique)
+│   ├── routers/       # FastAPI route handlers
+│   └── schemas/       # Pydantic v2 request/response schemas
+├── frontend/          # React 18 + Vite analyst dashboard (TypeScript)
+├── mcp_server/        # IBM Bob MCP server — custom tool definitions for Bob AI
+├── .env.example       # Environment variable template (copy to .env and fill in)
+└── README.md          # This file
 ```
 
-### Data / AI Project
-```
-src/
-  data/           ← Data ingestion / preprocessing
-  models/         ← ML model code
-  api/            ← Serving layer
-  notebooks/      ← Jupyter notebooks (exploration)
-```
+## Quick Setup
 
-### CLI / Script-based Tool
-```
-src/
-  cli/            ← CLI entry points
-  lib/            ← Core logic
-  utils/          ← Helpers
+```bash
+# Backend
+pip install -r backend/requirements.txt
+uvicorn backend.main:app --reload --port 8000
+
+# MCP Server
+uvicorn mcp_server.main:app --port 8001
+
+# Frontend
+cd frontend && npm install && npm run dev
 ```
 
-## Important Files to Include
+See [`../docs/setup-guide.md`](../docs/setup-guide.md) for full prerequisites and Docker instructions.
 
-- `requirements.txt` or `package.json` — dependency manifest
-- `.env.example` — template for environment variables (NEVER commit `.env`)
-- Any database migration files
-- Configuration files
+## Environment Variables
 
-## What NOT to Include in src/
-
-- `.env` files with real secrets
-- Large binary files (use Git LFS or link externally)
-- `node_modules/` or `venv/` (these are in `.gitignore`)
-- Build artifacts (`dist/`, `build/`, `__pycache__/`)
+Copy `.env.example` to `.env` and set `BOB_API_KEY`. All other variables have sensible defaults.
+Never commit `.env` — it is in `.gitignore`.

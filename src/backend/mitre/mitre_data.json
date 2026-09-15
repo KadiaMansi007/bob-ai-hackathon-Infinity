@@ -1,0 +1,103 @@
+{
+  "tactics": {
+    "TA0001": {"name": "Initial Access", "description": "Techniques to gain initial foothold"},
+    "TA0002": {"name": "Execution", "description": "Techniques to run adversary-controlled code"},
+    "TA0003": {"name": "Persistence", "description": "Techniques to maintain presence"},
+    "TA0004": {"name": "Privilege Escalation", "description": "Techniques to gain higher-level permissions"},
+    "TA0006": {"name": "Credential Access", "description": "Techniques to steal credentials"},
+    "TA0007": {"name": "Discovery", "description": "Techniques to gain knowledge of the environment"},
+    "TA0008": {"name": "Lateral Movement", "description": "Techniques to move through the environment"},
+    "TA0009": {"name": "Collection", "description": "Techniques to gather data of interest"},
+    "TA0010": {"name": "Exfiltration", "description": "Techniques to steal data"},
+    "TA0011": {"name": "Command and Control", "description": "Techniques to communicate with compromised systems"},
+    "TA0043": {"name": "Reconnaissance", "description": "Techniques to gather information before attack"}
+  },
+  "techniques": {
+    "T1110": {
+      "name": "Brute Force",
+      "tactic_id": "TA0006",
+      "subtechniques": {
+        "T1110.001": {"name": "Password Guessing", "evidence_hint": "single_username_high_attempts"},
+        "T1110.003": {"name": "Password Spraying", "evidence_hint": "multiple_usernames_spray"}
+      }
+    },
+    "T1068": {
+      "name": "Exploitation for Privilege Escalation",
+      "tactic_id": "TA0004",
+      "subtechniques": {}
+    },
+    "T1021": {
+      "name": "Remote Services",
+      "tactic_id": "TA0008",
+      "subtechniques": {
+        "T1021.002": {"name": "SMB/Windows Admin Shares", "evidence_hint": "protocol_smb_or_port_445"},
+        "T1021.004": {"name": "SSH", "evidence_hint": "protocol_ssh_or_port_22"}
+      }
+    },
+    "T1041": {
+      "name": "Exfiltration Over C2 Channel",
+      "tactic_id": "TA0010",
+      "subtechniques": {}
+    },
+    "T1046": {
+      "name": "Network Service Discovery",
+      "tactic_id": "TA0007",
+      "subtechniques": {}
+    },
+    "T1071": {
+      "name": "Application Layer Protocol",
+      "tactic_id": "TA0011",
+      "subtechniques": {
+        "T1071.001": {"name": "Web Protocols", "evidence_hint": "protocol_http_https"},
+        "T1071.004": {"name": "DNS", "evidence_hint": "protocol_dns"}
+      }
+    },
+    "T1204": {
+      "name": "User Execution",
+      "tactic_id": "TA0002",
+      "subtechniques": {
+        "T1204.001": {"name": "Malicious Link", "evidence_hint": "url_indicator"},
+        "T1204.002": {"name": "Malicious File", "evidence_hint": "executable_file_type"}
+      }
+    },
+    "T1595": {
+      "name": "Active Scanning",
+      "tactic_id": "TA0043",
+      "subtechniques": {
+        "T1595.001": {"name": "Scanning IP Blocks", "evidence_hint": "ioc_type_ip_range"},
+        "T1595.002": {"name": "Vulnerability Scanning", "evidence_hint": "ioc_type_cve_vuln"}
+      }
+    },
+    "T1591": {
+      "name": "Gather Victim Org Information",
+      "tactic_id": "TA0043",
+      "subtechniques": {}
+    },
+    "T1190": {
+      "name": "Exploit Public-Facing Application",
+      "tactic_id": "TA0001",
+      "subtechniques": {}
+    },
+    "T1602": {
+      "name": "Data from Network Device",
+      "tactic_id": "TA0009",
+      "subtechniques": {}
+    }
+  },
+  "alert_type_mappings": {
+    "failed_login_burst":       {"technique_id": "T1110"},
+    "privilege_escalation":     {"technique_id": "T1068"},
+    "lateral_movement":         {"technique_id": "T1021"},
+    "data_exfil":               {"technique_id": "T1041"},
+    "port_scan":                {"technique_id": "T1046"},
+    "c2_beacon":                {"technique_id": "T1071"},
+    "malware_hash_match":       {"technique_id": "T1204"},
+    "dns_tunnelling":           {"technique_id": "T1071"},
+    "ioc_match":                {"technique_id": "T1595"},
+    "threat_actor_sighting":    {"technique_id": "T1591"},
+    "vulnerability_exploitation": {"technique_id": "T1190"},
+    "anomalous_vessel_movement":  {"technique_id": "T1602"},
+    "rf_signal_anomaly":          {"technique_id": "T1602"},
+    "formation_change":           {"technique_id": "T1591"}
+  }
+}
