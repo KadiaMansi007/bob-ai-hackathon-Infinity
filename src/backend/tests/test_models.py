@@ -45,7 +45,7 @@ from backend.models import (
 # Fixtures
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def engine():
     """In-memory SQLite engine — isolated per test module."""
     eng = create_engine(
@@ -62,7 +62,7 @@ def engine():
     Base.metadata.drop_all(bind=eng)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def session(engine) -> Session:
     """Single session used by all tests in this module."""
     SessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
@@ -128,7 +128,7 @@ def test_feed_run_insert(session):
 # ST-02-03  RawAlert insert
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def raw_alert(session) -> RawAlert:
     ra = RawAlert(
         id=_uid(),
@@ -150,7 +150,7 @@ def test_raw_alert_insert(raw_alert):
 # ST-02-04  NormalisedAlert insert + FK + fingerprint
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def normalised_alert(session, raw_alert) -> NormalisedAlert:
     na = NormalisedAlert(
         id=_uid(),
@@ -212,7 +212,7 @@ def test_fingerprint_unique_constraint(session, normalised_alert):
 # ST-02-05  Incident + IncidentAlert
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def incident(session) -> Incident:
     inc = Incident(
         id=_uid(),
@@ -239,7 +239,7 @@ def test_incident_insert(incident):
     assert incident.status == "OPEN"
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def normalised_alert_2(session) -> NormalisedAlert:
     """Second alert so we can re-attach a fresh raw_alert."""
     ra2 = RawAlert(
@@ -294,7 +294,7 @@ def test_incident_alert_join(session, incident, normalised_alert, normalised_ale
 # ST-02-06  RiskScore
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def risk_score(session, incident) -> RiskScore:
     rs = RiskScore(
         id=_uid(),
@@ -387,7 +387,7 @@ def test_mitre_mapping_not_determined(session, normalised_alert_2, incident):
 # ST-02-08  BobAnalysis
 # ---------------------------------------------------------------------------
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def bob_analysis(session, incident) -> BobAnalysis:
     ba = BobAnalysis(
         id=_uid(),
@@ -417,7 +417,7 @@ def test_bob_analysis_insert(bob_analysis, incident):
     assert bob_analysis.incident_id == incident.id
 
 
-def test_bob_analysis_unique_per_incident(session, incident):
+def test_bob_analysis_unique_per_incident(session, incident, bob_analysis):
     """A second BobAnalysis for the same incident must raise IntegrityError."""
     dup = BobAnalysis(
         id=_uid(),

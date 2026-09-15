@@ -44,7 +44,7 @@ class BobAnalysis(Base):
 
     # --- Bob's classification -------------------------------------------
     bob_classification: Mapped[str] = mapped_column(
-        String(32), nullable=False, index=True
+        String(32), nullable=False, unique=True, index=True
     )
     bob_confidence: Mapped[float] = mapped_column(Float, nullable=False)
 
@@ -56,7 +56,7 @@ class BobAnalysis(Base):
     # --- Agreement with deterministic pipeline ---------------------------
     # AGREES | DISAGREES | PARTIAL
     agreement_status: Mapped[str] = mapped_column(
-        String(16), nullable=False, index=True
+        String(16), nullable=False, unique=True, index=True
     )
     # Non-empty when agreement_status is DISAGREES or PARTIAL
     agreement_detail: Mapped[str] = mapped_column(Text, nullable=False, default="")
