@@ -1,0 +1,857 @@
+Yes — this is an important question because if you don't understand who is actually using Infinity and where the alerts come from, the whole D2 project can feel abstract.
+
+The simplest answer is:
+
+Infinity is a decision-support system for a security/defence operations team. It does not itself magically detect every attack. Other sensors and security systems detect events and generate alerts; Infinity collects those alerts, connects them, adds context, decides what deserves attention, and explains the situation to the analyst.
+
+IBM describes SIEM systems as collecting event data from users, endpoints, applications, networks, firewalls and other security tools, then correlating and analyzing it so security teams can triage alerts and investigate threats.
+
+Let's build the picture from zero.
+
+1. First: Who is using your website?
+
+Your primary user is a:
+
+🧑‍💻 Security / Defence Analyst
+
+Think of them as a person sitting in a Security Operations Center (SOC) or a defence/security operations environment.
+
+Their job is essentially:
+
+"Something suspicious is happening. Is it actually a threat? What is happening? How serious is it? What should we investigate first?"
+
+IBM describes security analysts as monitoring and analyzing security alerts from many technologies, while MITRE describes defenders using ATT&CK to understand adversary behavior and improve detection/response.
+
+They aren't necessarily the person who created the alert.
+
+That's a very important distinction.
+
+2. Imagine a real organization
+
+Let's create a fictional organization:
+
+"National Defence Network"
+
+It has:
+
+          National Defence Network
+                    │
+       ┌────────────┼────────────┐
+       ↓            ↓            ↓
+   Military      Data       Communication
+   systems      centers       systems
+       │            │            │
+       └────────────┼────────────┘
+                    ↓
+              Security Team
+
+There are thousands/millions of things happening every day.
+
+People log in.
+
+Computers communicate.
+
+Servers exchange data.
+
+Networks receive traffic.
+
+Remote systems connect.
+
+Sensors observe activity.
+
+Satellites observe physical activity.
+
+Intelligence teams produce reports.
+
+3. Who detects something suspicious?
+
+This is where your question:
+
+"Whose feed are detected?"
+
+comes in.
+
+There isn't just ONE detector.
+
+There are multiple sources.
+
+Your D2 problem specifically mentions things like:
+
+1. SIEM
+
+Security Information and Event Management.
+
+It collects security events from many IT systems and can generate alerts.
+
+2. Cyber sensors
+
+These monitor network/system activity.
+
+For example:
+
+Network traffic
+
+Computer A
+    ↓
+Cyber sensor
+    ↓
+Suspicious traffic detected
+3. Satellite feeds
+
+These can provide information about physical/geospatial activity.
+
+For example, in a fictional defence scenario:
+
+Satellite
+   ↓
+Unusual vessel movement
+   ↓
+Feed
+   ↓
+Infinity
+4. Intelligence reports
+
+Humans/intelligence systems may produce information such as:
+
+Known suspicious actor
+Known infrastructure
+Known activity
+Observed behavior
+
+That information can become another source of evidence.
+
+4. So Infinity isn't necessarily detecting the original event?
+
+Exactly.
+
+This is one of the most important things to understand.
+
+Think:
+
+          REAL WORLD
+              │
+      ┌───────┼────────┐
+      ↓       ↓        ↓
+     SIEM   Sensors  Intel
+      │       │        │
+      ↓       ↓        ↓
+    Alert   Alert    Report
+       \      |       /
+        \     |      /
+         ↓    ↓     ↓
+          INFINITY
+             │
+             ↓
+       Correlation
+             ↓
+       Risk/priority
+             ↓
+      Threat assessment
+             ↓
+           BLUF
+             ↓
+          ANALYST
+
+Infinity is the intelligence/correlation layer between raw information and the person who has to make a decision.
+
+IBM Research describes this investigation stage as enriching alerts with contextual and threat intelligence information, correlating them, and assessing severity and priority.
+
+5. Then why do we need Infinity if SIEM already gives alerts?
+
+🔥 THIS is the core of your entire hackathon problem.
+
+Someone might ask you this tomorrow.
+
+Don't answer:
+
+"Because we use AI."
+
+That's not enough.
+
+The real answer is:
+
+A SIEM/security tool can produce many alerts, but an alert is not necessarily an incident. Analysts still need to determine which alerts are related, which are false positives, what the overall attack story is, and which incident deserves attention first.
+
+IBM explicitly describes SIEM as performing event correlation and helping security teams triage alerts, while IBM's threat-management research focuses on further correlating and enriching alerts to assess severity and priority.
+
+6. Here's a very simple example
+
+Imagine the system produces:
+
+Alert 1
+10:01
+
+17 failed logins
+User: admin
+IP: 45.2.3.4
+Alert 2
+10:05
+
+Successful login
+User: admin
+IP: 45.2.3.4
+Alert 3
+10:08
+
+Privilege escalation
+Machine: SERVER-01
+Alert 4
+10:12
+
+Connection from SERVER-01
+to SERVER-02
+Alert 5
+10:20
+
+Large outbound data transfer
+
+The system may have generated 5 separate alerts.
+
+But the analyst shouldn't necessarily think:
+
+"I have five unrelated problems."
+
+They might represent:
+
+Failed login
+      ↓
+Successful access
+      ↓
+Privilege escalation
+      ↓
+Lateral movement
+      ↓
+Data exfiltration
+
+That's potentially one incident/attack sequence.
+
+Your Infinity system's job is to help reveal that relationship.
+
+MITRE's own examples describe SOC analysts starting with one alert and then running additional analytics to discover related suspicious activity on the affected host.
+
+7. Why does the analyst need to see alerts?
+
+Because an alert contains evidence.
+
+Think of a detective.
+
+Suppose a detective gets:
+
+Fingerprint found
+Camera saw someone
+Door opened at 2 AM
+Car seen nearby
+
+One piece alone may mean little.
+
+Together, they tell a story.
+
+A security analyst does something similar with digital evidence.
+
+They might have:
+
+Failed login
++
+Malicious IP
++
+Privilege escalation
++
+Unusual network traffic
+
+The analyst asks:
+
+"Do these belong together?"
+
+That's why alerts matter.
+
+8. But why can't the analyst just look at every alert?
+
+Because there can be too many.
+
+Imagine:
+
+10,000 alerts
+
+The analyst has limited time.
+
+They cannot investigate all 10,000 deeply.
+
+Suppose:
+
+10,000 alerts
+      ↓
+8,500 likely noise / false positives
+1,000 low priority
+400 medium
+100 high
+
+The analyst needs to know:
+
+Which 10 should I investigate first?
+
+That's alert prioritisation.
+
+IBM describes alert prioritization as helping analysts focus on critical alerts and reduce the chance of missing important incidents.
+
+9. What does "false positive" mean here?
+
+Suppose your organization is doing an authorized security scan.
+
+The scan generates:
+
+PORT SCAN DETECTED
+
+The security system says:
+
+🚨 Suspicious!
+
+But the analyst knows:
+
+"That's our own security team performing an authorized scan."
+
+So:
+
+Detection = correct
+Threat interpretation = false
+
+That's a false positive.
+
+Infinity should help identify that.
+
+10. But there's another dangerous situation
+
+Imagine there are:
+
+9,999 harmless alerts
++
+1 real attack
+
+The analyst could get buried in noise.
+
+That's why your project isn't simply:
+
+"Detect threats."
+
+It's:
+
+Find the important signal inside a huge amount of security information.
+
+That's a much better way to understand D2.
+
+11. So who is the "defence analyst"?
+
+Let's make this extremely simple.
+
+A defence/security analyst is basically:
+
+The human who investigates suspicious activity and decides what it means and what should happen next.
+
+Their workflow might be:
+
+ALERT
+ ↓
+Is this real?
+ ↓
+What caused it?
+ ↓
+Are other alerts related?
+ ↓
+Who/what is affected?
+ ↓
+How serious is it?
+ ↓
+What attacker behavior is involved?
+ ↓
+What should we investigate?
+ ↓
+Report findings
+
+Infinity helps automate/accelerate many of those middle steps.
+
+IBM's threat-management research describes this progression as detection → investigation → response.
+
+12. Where does the commander come in?
+
+This is another important distinction.
+
+You can have:
+
+Level 1 — Raw systems
+Sensors
+SIEM
+EDR
+Network tools
+
+↓
+
+Level 2 — Analyst
+"I need to understand what happened."
+
+↓
+
+Level 3 — Commander / decision maker
+"Is this important enough to require action?"
+
+The commander doesn't necessarily need:
+
+Alert #18273
+timestamp 10:32:15
+TCP packet...
+process ID...
+
+They need:
+
+"A high-priority incident appears to be affecting three systems. Evidence indicates credential compromise followed by lateral movement. Immediate investigation is recommended."
+
+That's where your BLUF becomes useful.
+
+13. So your website could actually have TWO users
+
+This is an idea I would strongly recommend.
+
+👨‍💻 Analyst Dashboard
+
+Show:
+
+Alerts
+Incidents
+Evidence
+Correlation
+Risk
+Confidence
+MITRE ATT&CK
+Timeline
+IOCs
+AI reasoning
+
+The analyst needs technical detail.
+
+🧑‍✈️ Commander Dashboard
+
+Show:
+
+HIGH PRIORITY INCIDENT
+
+What happened?
+↓
+Why does it matter?
+↓
+What is affected?
+↓
+How confident are we?
+↓
+What needs attention?
+
+The commander doesn't need all 10,000 alerts.
+
+14. Here's where your current Infinity project fits
+
+Your current architecture was basically:
+
+SIEM
+Cyber Sensors
+Satellite
+Intel Reports
+       ↓
+   Normalise
+       ↓
+   Deduplicate
+       ↓
+False-positive filtering
+       ↓
+   Correlation
+       ↓
+    Incident
+       ↓
+   Risk Score
+       ↓
+Auto Classification
+       ↓
+MITRE ATT&CK
+       ↓
+    IBM Bob
+       ↓
+     BLUF
+       ↓
+    Dashboard
+
+Now you can understand what every step actually means.
+
+15. Your project isn't detecting "people"
+
+Another important clarification.
+
+You're not necessarily saying:
+
+"We detected a hacker."
+
+You're detecting events and behaviors.
+
+For example:
+
+Failed authentication
+Suspicious network connection
+Malware hash
+Port scanning
+Privilege escalation
+Lateral movement
+Unusual DNS
+Data transfer
+
+Then you combine evidence to determine whether those events represent a meaningful threat.
+
+MITRE ATT&CK is specifically focused on modeling adversary tactics and techniques/behaviors, rather than simply identifying a person.
+
+16. How are these things actually detected?
+
+This is where you can explain your architecture properly.
+
+For example:
+
+Failed login
+
+Authentication system detects:
+
+Login failed
+
+↓
+
+SIEM receives the event.
+
+↓
+
+Rule:
+
+More than X failures
+within Y minutes
+
+↓
+
+Alert generated.
+
+Port scan
+
+Network sensor sees:
+
+One source
+↓
+Many destination ports
+
+↓
+
+Detection rule/analytics:
+
+Unusual scanning behavior
+
+↓
+
+Alert.
+
+Malware
+
+Endpoint security tool detects:
+
+Known malicious file hash
+
+↓
+
+Alert.
+
+Suspicious DNS
+
+Network monitoring detects:
+
+Unusual DNS request pattern
+
+↓
+
+Alert.
+
+MITRE notes that different ATT&CK techniques can be detected using different data sources such as authentication logs, process monitoring, file/registry monitoring and network packet data.
+
+17. This means your project has TWO different jobs
+
+This is very important.
+
+Job 1: Detection
+
+Something else may say:
+
+"This activity looks suspicious."
+
+Job 2: Investigation / correlation
+
+Infinity says:
+
+"Let's understand what all these things together mean."
+
+Your D2 project is heavily focused on Job 2.
+
+And that's why "correlation" and "alert prioritisation" are in the problem title.
+
+18. The easiest analogy
+
+Imagine a hospital.
+
+You have:
+
+Heart monitor
+Blood pressure
+Temperature
+Blood test
+X-ray
+
+Each produces information.
+
+One says:
+
+Heart rate abnormal.
+
+Another:
+
+Temperature high.
+
+Another:
+
+Blood pressure abnormal.
+
+The doctor doesn't treat each measurement as a separate disease.
+
+The doctor combines them.
+
+Sensors = data sources
+Alerts = abnormal observations
+Correlation = combining observations
+Risk = seriousness
+Analyst = investigator
+BLUF = concise diagnosis/status summary
+
+Your D2 system is doing something conceptually similar for cybersecurity/defence operations.
+
+19. And THIS gives you a much better innovation idea
+
+Now that you understand who the user is, I'd add a feature called something like:
+
+"Show Me Why"
+
+Suppose Infinity says:
+
+🔴 GENUINE THREAT
+Risk: 92
+
+The analyst clicks:
+
+Why?
+
+And Infinity shows:
+
+WHY WE FLAGGED THIS INCIDENT
+──────────────────────────────
+
+✓ 5 related alerts
+✓ Same source entity
+✓ Known malicious IOC
+✓ Privilege escalation observed
+✓ Lateral movement observed
+✓ Activity occurred outside maintenance window
+
+MITRE:
+Credential Access
+        ↓
+Privilege Escalation
+        ↓
+Lateral Movement
+
+Confidence: 94%
+
+Now you're helping the actual analyst, not just making a fancy dashboard.
+
+20. Even better: "What should I investigate next?"
+
+This is another useful analyst feature.
+
+After detecting:
+
+Genuine Threat
+Risk: 91
+
+show:
+
+Investigation checklist
+1. Examine SERVER-02
+2. Verify administrator login
+3. Check source IP history
+4. Review outbound connections
+5. Check for additional compromised accounts
+
+Notice the wording:
+
+"Investigation suggestions"
+
+not:
+
+"AI automatically takes control."
+
+That keeps the analyst in the loop.
+
+21. And this is the answer you should remember for tomorrow
+
+If a mentor asks:
+
+"Who is your target user?"
+
+Say:
+
+"Our primary user is a security or defence analyst who has to investigate a large volume of alerts coming from different security and intelligence sources."
+
+If they ask:
+
+"Where do your alerts come from?"
+
+Say:
+
+"Infinity is designed to ingest alerts and information from sources such as SIEMs, cyber sensors, satellite feeds and intelligence reports. These sources observe different aspects of the environment and generate events or reports."
+
+If they ask:
+
+"Why do we need your system if SIEM already generates alerts?"
+
+Say:
+
+"Because individual alerts don't necessarily tell the complete story. Infinity correlates related alerts across sources, filters likely false positives, assesses risk and confidence, maps behaviors to MITRE ATT&CK, and generates an investigation-ready BLUF so analysts can focus on the incidents that matter most."
+
+That's a very strong D2 explanation.
+
+And IBM's own materials support this distinction: SIEM aggregates/correlates security data and provides alerts, while threat-management workflows use correlation, context, threat intelligence and prioritization to help analysts investigate incidents.
+
+The one diagram you should memorize
+              REAL WORLD ACTIVITY
+                       ↓
+        ┌──────────────┼──────────────┐
+        ↓              ↓              ↓
+       SIEM       Cyber Sensors    Intelligence
+        ↓              ↓              ↓
+      ALERT          ALERT          REPORT
+        └──────────────┼──────────────┘
+                       ↓
+                    INFINITY
+                       ↓
+                 CORRELATION
+                       ↓
+            FALSE POSITIVE FILTER
+                       ↓
+               INCIDENT CREATION
+                       ↓
+              RISK + CONFIDENCE
+                       ↓
+                MITRE ATT&CK
+                       ↓
+              IBM BOB REASONING
+                       ↓
+                    BLUF
+                  ↙       ↘
+             ANALYST     COMMANDER
+
+The key insight: Infinity isn't replacing the sensors or the analyst. It sits between a huge amount of raw security information and the humans who need to understand and act on it. That is the core of D2.
+
+Bluehost
+
+Virtual Private Server Hosting
+
+Blazing-fast VPS with root access, 99.9% uptime & real human support 24/7
+
+Ad
+More options
+Today 6:16 PM
+https://chatgpt.com/share/6aa96196-2748-83e9-aa89-6b20b64747bc in this how to open the website
+
+Yes. That link is a shared ChatGPT conversation, not the actual website/project itself.
+
+Open the shared ChatGPT conversation
+
+If you mean “the website shown/created in that ChatGPT conversation”, I need to see what was in that conversation to tell you exactly how to launch it. The shared page isn't loading for me right now.
+
+If you mean your Infinity website
+
+From your project folder, you normally need two terminals.
+
+Terminal 1 — Backend:
+
+cd "C:\path\to\bob-ai-hackathon-Infinity\src"
+
+then:
+
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+
+Terminal 2 — Frontend:
+
+cd "C:\path\to\bob-ai-hackathon-Infinity\src\frontend"
+
+then:
+
+npm run dev
+
+You'll get something like:
+
+Local: http://localhost:5173/
+
+Open that address in Chrome.
+
+If you're asking about the exact website from the shared ChatGPT link, send me a screenshot of that conversation's website or paste the part where the website was created, and I'll tell you exactly how to open it.
+
+Hatchable
+
+Build a live app from ChatGPT
+
+We give your app a live URL and everything it needs to work. Free.
+
+Ad
+More options
+C:\Users\m8128\OneDrive\Desktop\ibm bob hackathon\bob-ai-hackathon-Infinity\src
+
+Yes 👍 That is your src folder.
+
+For your IBM BoB Infinity project, do this:
+
+1. Start the backend
+
+Open Terminal 1 and run:
+
+cd "C:\Users\m8128\OneDrive\Desktop\ibm bob hackathon\bob-ai-hackathon-Infinity\src"
+
+Then:
+
+uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
+
+Keep this terminal running.
+
+You should see something like:
+
+Uvicorn running on http://127.0.0.1:8000
+2. Start the frontend
+
+Open Terminal 2 and run:
+
+cd "C:\Users\m8128\OneDrive\Desktop\ibm bob hackathon\bob-ai-hackathon-Infinity\src\frontend"
+
+Then:
+
+npm run dev
+
+You should get:
+
+Local: http://localhost:5173/
+3. Open your website
+
+Open Chrome and go to:
+
+http://localhost:5173/
+
+That should open your Infinity Threat Intelligence Platform.
+
+If you are trying to open the website shown in the ChatGPT shared link, send me a screenshot of that page and I’ll tell you exactly what to click/run.
+
+Sponsored options
+Ad
+Sponsored options
+Ad

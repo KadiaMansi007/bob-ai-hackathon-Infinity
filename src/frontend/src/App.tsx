@@ -7,6 +7,7 @@ import IncidentList from './pages/IncidentList'
 import IncidentDetail from './pages/IncidentDetail'
 import MitreMatrix from './pages/MitreMatrix'
 import BlufSummary from './pages/BlufSummary'
+import CommanderDashboard from './pages/CommanderDashboard'
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="/incidents/:id" element={<IncidentDetail />} />
         <Route path="/incidents/:id/bluf" element={<BlufSummary />} />
         <Route path="/mitre" element={<MitreMatrix />} />
+        <Route path="/commander" element={<CommanderDashboard />} />
       </Routes>
     </Layout>
   )

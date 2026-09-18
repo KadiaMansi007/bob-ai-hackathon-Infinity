@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import {
-  LayoutDashboard, AlertTriangle, Layers, Shield, Target, FileText, Activity
+  LayoutDashboard, AlertTriangle, Layers, Shield, Target, Activity, Eye
 } from 'lucide-react'
 
 const nav = [
@@ -8,6 +8,7 @@ const nav = [
   { to: '/alerts', icon: AlertTriangle, label: 'Alert Feed' },
   { to: '/incidents', icon: Layers, label: 'Incidents' },
   { to: '/mitre', icon: Target, label: 'MITRE ATT&CK' },
+  { to: '/commander', icon: Eye, label: 'Commander View' },
 ]
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -18,10 +19,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div className="p-4 border-b border-[#2e3a4e]">
           <div className="flex items-center gap-2">
             <Shield className="text-blue-400" size={20} />
-            <span className="font-bold text-sm text-white leading-tight">
-              Infinity<br />
-              <span className="text-blue-400 font-normal text-xs">Threat Platform</span>
-            </span>
+            <div>
+              <span className="font-bold text-sm text-white block">Infinity</span>
+              <span className="text-blue-400 font-normal text-xs block">Threat Platform</span>
+              <span className="text-slate-500 font-normal text-xs block">Security Operations Centre</span>
+            </div>
           </div>
         </div>
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
@@ -44,10 +46,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
         <div className="p-3 border-t border-[#2e3a4e]">
-          <div className="text-xs text-slate-500 flex items-center gap-1">
+          <div className="text-xs text-slate-500 flex items-center gap-1 flex-wrap">
             <Activity size={10} className="text-blue-400" />
-            Powered by IBM Bob
+            <span>Correlation · Prioritisation · BLUF</span>
           </div>
+          <div className="text-xs text-slate-600 mt-1">Powered by IBM Bob</div>
         </div>
       </aside>
 

@@ -55,13 +55,29 @@ export default function Dashboard() {
         </button>
       </div>
 
+      {/* Commander alert banner — shown when P1 incidents exist */}
+      {s.p1_incidents > 0 && (
+        <div className="flex items-center gap-3 bg-amber-900/20 border border-amber-600/50 rounded-lg px-4 py-3">
+          <span className="text-amber-400 text-lg">⚠</span>
+          <div className="flex-1">
+            <span className="text-amber-300 font-semibold text-sm">COMMAND ALERT — </span>
+            <span className="text-amber-200 text-sm">{s.p1_incidents} high-priority incident{s.p1_incidents !== 1 ? 's' : ''} require immediate attention.</span>
+          </div>
+          <Link to="/incidents?severity=CRITICAL" className="text-xs text-amber-400 border border-amber-600/50 rounded px-2 py-1 hover:bg-amber-900/30">
+            View →
+          </Link>
+        </div>
+      )}
+
       {/* Stats bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[
           { label: 'Total Alerts', value: s.total_alerts, color: 'text-blue-400' },
           { label: 'Open Incidents', value: s.open_incidents, color: 'text-orange-400' },
           { label: 'P1 Incidents', value: s.p1_incidents, color: 'text-red-400' },
           { label: 'FP Rate', value: `${(s.false_positive_rate * 100).toFixed(1)}%`, color: 'text-emerald-400' },
+          { label: 'False Positives', value: s.false_positive_count, color: 'text-emerald-400' },
+          { label: 'Genuine Threats', value: s.genuine_threat_count, color: 'text-red-400' },
         ].map(({ label, value, color }) => (
           <Card key={label}>
             <div className="text-xs text-slate-500 uppercase tracking-wide mb-1">{label}</div>
@@ -96,7 +112,7 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* Recent incidents */}
+      {/* Recent incidents — Signal vs Noise context */}
       <Card>
         <SectionHeading>Recent Incidents</SectionHeading>
         <table className="w-full text-sm">
@@ -130,6 +146,49 @@ export default function Dashboard() {
           </tbody>
         </table>
         <Link to="/incidents" className="text-blue-400 text-xs hover:underline mt-2 block">View all incidents →</Link>
+      </Card>
+
+      {/* Source Pipeline Strip — Point 14 */}
+      <Card>
+        <SectionHeading>Infinity Intelligence Pipeline</SectionHeading>
+        <div className="flex flex-wrap items-center gap-1 text-xs">
+          {[
+            { label: 'SIEM', color: 'bg-purple-900/40 text-purple-300 border-purple-700' },
+            { label: 'CYBER SENSOR', color: 'bg-cyan-900/40 text-cyan-300 border-cyan-700' },
+            { label: 'SATELLITE', color: 'bg-green-900/40 text-green-300 border-green-700' },
+            { label: 'INTEL REPORT', color: 'bg-amber-900/40 text-amber-300 border-amber-700' },
+            { label: 'INFINITY', color: 'bg-blue-900/40 text-blue-300 border-blue-700', accent: true },
+            { label: 'CORRELATION', color: 'bg-slate-800 text-slate-300 border-slate-600' },
+            { label: 'FP FILTER', color: 'bg-emerald-900/40 text-emerald-300 border-emerald-700' },
+            { label: 'RISK SCORE', color: 'bg-orange-900/40 text-orange-300 border-orange-700' },
+            { label: 'MITRE ATT&CK', color: 'bg-purple-900/40 text-purple-300 border-purple-700' },
+            { label: 'IBM BOB', color: 'bg-blue-900/40 text-blue-300 border-blue-700' },
+            { label: 'BLUF', color: 'bg-red-900/40 text-red-300 border-red-700' },
+          ].map((stage, i, arr) => (
+            <span key={stage.label} className="flex items-center gap-1">
+              <span className={`px-2 py-0.5 rounded border font-mono ${stage.color}`}>{stage.label}</span>
+              {i < arr.length - 1 && <span className="text-slate-600">→</span>}
+            </span>
+          ))}
+        </div>
+      </Card>
+
+      {/* About Infinity — Points 5, 17, 18 */}
+      <Card>
+        <SectionHeading>About Infinity</SectionHeading>
+        <p className="text-slate-400 text-sm leading-relaxed">
+          Infinity sits between raw sensor alerts and the analyst. Like a doctor combining vital signs,
+          it correlates events from <span className="text-purple-300">SIEM</span>,{' '}
+          <span className="text-cyan-300">Cyber Sensors</span>,{' '}
+          <span className="text-green-300">Satellites</span> and{' '}
+          <span className="text-amber-300">Intel Reports</span> — filtering noise, scoring risk,
+          mapping MITRE ATT&amp;CK tactics, and generating a <span className="text-blue-300">BLUF</span> for every incident.
+        </p>
+        <p className="text-slate-500 text-xs mt-2 leading-relaxed">
+          Infinity doesn't detect the original event — it detects <em>meaning</em>. Individual alerts
+          don't tell the complete story. Infinity reveals the relationship between them so analysts can
+          focus on the signal inside the noise.
+        </p>
       </Card>
     </div>
   )

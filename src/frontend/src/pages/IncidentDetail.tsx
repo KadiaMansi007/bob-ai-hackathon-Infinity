@@ -26,6 +26,69 @@ export default function IncidentDetail() {
   const rs = inc.risk_score
   const ba = inc.bob_analysis
 
+  // ── Analyst Workflow auto-check logic (Point 11) ──
+  const workflowSteps = [
+    {
+      label: 'Is this real?',
+      done: inc.auto_classification !== 'UNCLASSIFIED',
+      detail: inc.auto_classification !== 'UNCLASSIFIED' ? inc.auto_classification?.replace('_', ' ') : 'Not yet classified',
+    },
+    {
+      label: 'What caused it?',
+      done: !!inc.fired_correlation_rule,
+      detail: inc.fired_correlation_rule ? `Rule ${inc.fired_correlation_rule}` : 'No rule fired',
+    },
+    {
+      label: 'Are other alerts related?',
+      done: (inc.member_alerts?.length ?? 0) > 1,
+      detail: `${inc.member_alerts?.length ?? 0} alert(s) correlated`,
+    },
+    {
+      label: 'Who / what is affected?',
+      done: (inc.member_alerts ?? []).some((a: any) => a.target_asset),
+      detail: [...new Set((inc.member_alerts ?? []).map((a: any) => a.target_asset).filter(Boolean))].slice(0, 3).join(', ') || '—',
+    },
+    {
+      label: 'How serious is it?',
+      done: !!rs,
+      detail: rs ? `Risk ${rs.total_score.toFixed(1)} / 100` : 'Not scored',
+    },
+    {
+      label: 'What attacker behaviour?',
+      done: (inc.mitre_summary?.mappings?.length ?? 0) > 0,
+      detail: [...new Set((inc.mitre_summary?.mappings ?? []).map((m: any) => m.tactic_name))].join(', ') || 'No MITRE mappings',
+    },
+    {
+      label: 'What to investigate?',
+      done: !!ba,
+      detail: ba ? 'Bob analysis complete' : 'Awaiting Bob analysis',
+    },
+  ]
+
+  // ── MITRE tactic → investigation step (Point 20) ──
+  const tacticSteps: Record<string, string> = {
+    'Credential Access': 'Examine authentication logs and verify credential activity on affected assets',
+    'Privilege Escalation': 'Audit privilege changes and review elevated account activity',
+    'Lateral Movement': 'Trace network connections between affected hosts for signs of internal spreading',
+    'Execution': 'Inspect process execution history and command-line arguments on affected endpoints',
+    'Exfiltration': 'Review outbound data transfer volumes, destinations, and timing',
+    'Persistence': 'Check for new scheduled tasks, services, registry keys, or startup entries',
+    'Discovery': 'Review reconnaissance activity such as port scans, directory queries, and system surveys',
+    'Command and Control': 'Inspect DNS queries, unusual outbound connections, and C2 beacon patterns',
+    'Initial Access': 'Investigate the initial entry point — phishing, exploit, or exposed service',
+    'Defense Evasion': 'Look for log clearing, disabled security tools, or obfuscated processes',
+    'Collection': 'Identify data staging activity — unusual file access or archive creation',
+    'Impact': 'Assess damage to systems — ransomware, data destruction, or service disruption',
+  }
+  const uniqueTactics = [...new Set((inc.mitre_summary?.mappings ?? []).map((m: any) => m.tactic_name as string))]
+  const affectedAssets = [...new Set((inc.member_alerts ?? []).map((a: any) => a.target_asset).filter(Boolean))] as string[]
+  const investigationSteps = [
+    ...uniqueTactics.map(t => tacticSteps[t] ?? `Investigate activity related to ${t} on affected assets`),
+    ...(affectedAssets.length > 0 ? [`Verify and audit activity on: ${affectedAssets.slice(0, 4).join(', ')}`] : []),
+    'Cross-check SIEM logs and sensor feeds for additional correlated events',
+    'Review outbound connections from all affected assets',
+  ].filter(Boolean)
+
   return (
     <div className="space-y-4 max-w-5xl">
       {/* Header */}
@@ -56,6 +119,32 @@ export default function IncidentDetail() {
           </Link>
         </div>
       </div>
+
+      {/* ── Analyst Workflow Steps (Point 11) ── */}
+      <Card>
+        <SectionHeading>🔎 Analyst Workflow</SectionHeading>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          {workflowSteps.map((step, i) => (
+            <div key={i} className={`rounded border p-2 text-xs ${step.done ? 'border-emerald-700 bg-emerald-900/20' : 'border-[#2e3a4e] bg-[#141824]'}`}>
+              <div className="flex items-center gap-1 mb-1">
+                <span className={step.done ? 'text-emerald-400' : 'text-slate-600'}>
+                  {step.done ? '✓' : '○'}
+                </span>
+                <span className={`font-semibold ${step.done ? 'text-emerald-300' : 'text-slate-500'}`}>{step.label}</span>
+              </div>
+              <div className="text-slate-500 text-xs">{step.detail}</div>
+            </div>
+          ))}
+          {/* Final step: BLUF */}
+          <div className="rounded border border-blue-700/50 bg-blue-900/20 p-2 text-xs">
+            <div className="flex items-center gap-1 mb-1">
+              <span className="text-blue-400">→</span>
+              <span className="font-semibold text-blue-300">Report findings (BLUF)</span>
+            </div>
+            <Link to={`/incidents/${id}/bluf`} className="text-blue-400 hover:underline">Generate BLUF →</Link>
+          </div>
+        </div>
+      </Card>
 
       {/* === CLASSIFICATION PANEL — The central dual-layer feature === */}
       <Card>
@@ -115,6 +204,63 @@ export default function IncidentDetail() {
         )}
       </Card>
 
+      {/* ── Show Me Why (Point 19) ── */}
+      {ba && (
+        <Card>
+          <SectionHeading>🔴 Why We Flagged This Incident</SectionHeading>
+          <div className="space-y-1.5">
+            <div className="flex items-start gap-2 text-sm">
+              <span className="text-emerald-400 mt-0.5">✓</span>
+              <span className="text-slate-300">
+                <span className="font-semibold text-white">{inc.member_alerts?.length ?? 0}</span> related alert{(inc.member_alerts?.length ?? 0) !== 1 ? 's' : ''} correlated into this incident
+              </span>
+            </div>
+            {(inc.source_types_involved ?? []).length > 0 && (
+              <div className="flex items-start gap-2 text-sm">
+                <span className="text-emerald-400 mt-0.5">✓</span>
+                <span className="text-slate-300">
+                  Activity detected across <span className="font-semibold text-white">{inc.source_types_involved.length}</span> source type(s): {inc.source_types_involved.join(', ')}
+                </span>
+              </div>
+            )}
+            {(inc.member_alerts ?? []).some((a: any) => !a.is_false_positive && a.confidence >= 0.8) && (
+              <div className="flex items-start gap-2 text-sm">
+                <span className="text-emerald-400 mt-0.5">✓</span>
+                <span className="text-slate-300">High-confidence alerts present (≥80% confidence, not false positives)</span>
+              </div>
+            )}
+            {uniqueTactics.length > 0 && (
+              <div className="flex items-start gap-2 text-sm">
+                <span className="text-emerald-400 mt-0.5">✓</span>
+                <span className="text-slate-300 flex flex-wrap items-center gap-1">
+                  MITRE ATT&amp;CK chain observed:&nbsp;
+                  {uniqueTactics.map((t, i) => (
+                    <span key={t} className="flex items-center gap-1">
+                      <span className="text-purple-300 bg-purple-900/30 px-1.5 py-0.5 rounded text-xs">{t}</span>
+                      {i < uniqueTactics.length - 1 && <span className="text-slate-600">→</span>}
+                    </span>
+                  ))}
+                </span>
+              </div>
+            )}
+            {rs && (
+              <div className="flex items-start gap-2 text-sm">
+                <span className="text-emerald-400 mt-0.5">✓</span>
+                <span className="text-slate-300">
+                  Risk score: <span className={`font-bold ${rs.total_score >= 80 ? 'text-red-400' : rs.total_score >= 60 ? 'text-orange-400' : 'text-yellow-400'}`}>{rs.total_score.toFixed(1)}</span> / 100
+                </span>
+              </div>
+            )}
+            <div className="flex items-start gap-2 text-sm">
+              <span className="text-emerald-400 mt-0.5">✓</span>
+              <span className="text-slate-300">
+                IBM Bob confidence: <span className="font-bold text-blue-300">{(ba.bob_confidence * 100).toFixed(0)}%</span>
+              </span>
+            </div>
+          </div>
+        </Card>
+      )}
+
       {/* Risk Score */}
       {rs && (
         <Card>
@@ -135,6 +281,25 @@ export default function IncidentDetail() {
         </Card>
       )}
 
+      {/* ── Investigation Checklist (Point 20) ── */}
+      {ba && investigationSteps.length > 0 && (
+        <Card>
+          <SectionHeading>🔍 What Should I Investigate Next?</SectionHeading>
+          <p className="text-xs text-slate-500 mb-3">Investigation Suggestions — analyst judgment required</p>
+          <ol className="space-y-2">
+            {investigationSteps.map((step, i) => (
+              <li key={i} className="flex items-start gap-3 text-sm">
+                <span className="text-blue-400 font-bold tabular-nums w-5 shrink-0">{i + 1}.</span>
+                <span className="text-slate-300">{step}</span>
+              </li>
+            ))}
+          </ol>
+          <p className="text-xs text-slate-600 mt-3 border-t border-[#2e3a4e] pt-2">
+            Suggestions generated by IBM Bob AI — analyst judgment required. This is not automated action.
+          </p>
+        </Card>
+      )}
+
       {/* Member alerts */}
       <Card>
         <SectionHeading>Member Alerts ({inc.member_alerts?.length ?? 0})</SectionHeading>
@@ -152,6 +317,34 @@ export default function IncidentDetail() {
           ))}
         </div>
       </Card>
+
+      {/* ── Attack Sequence Timeline (Point 6) ── */}
+      {(inc.member_alerts?.length ?? 0) >= 2 && (
+        <Card>
+          <SectionHeading>⏱ Attack Sequence Timeline</SectionHeading>
+          <p className="text-xs text-slate-500 mb-3">Alerts sorted by time — revealing the attack story</p>
+          <div className="space-y-2">
+            {[...(inc.member_alerts ?? [])]
+              .sort((a: any, b: any) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+              .map((a: any, i: number, arr: any[]) => (
+                <div key={a.id} className="flex items-start gap-3">
+                  <div className="flex flex-col items-center">
+                    <div className="w-2.5 h-2.5 rounded-full bg-blue-400 shrink-0 mt-1" />
+                    {i < arr.length - 1 && <div className="w-0.5 h-6 bg-[#2e3a4e] mt-1" />}
+                  </div>
+                  <div className="flex-1 pb-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs text-slate-500">{new Date(a.timestamp).toLocaleTimeString()}</span>
+                      <SeverityBadge severity={a.severity} />
+                      <span className="font-mono text-xs text-slate-300">{a.alert_type}</span>
+                      {a.target_asset && <span className="text-xs text-slate-500">on <span className="text-slate-300">{a.target_asset}</span></span>}
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </Card>
+      )}
 
       {/* MITRE */}
       {inc.mitre_summary?.mappings?.length > 0 && (
