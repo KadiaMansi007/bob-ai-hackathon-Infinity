@@ -62,6 +62,7 @@ class NormalisedAlertSummary(_OrmBase):
     target_asset: str
     is_false_positive: bool
     fp_reason: str | None
+    fp_masking_suspected: bool = False
 
 
 class NormalisedAlertRead(_OrmBase):
@@ -80,6 +81,7 @@ class NormalisedAlertRead(_OrmBase):
     fingerprint: str
     is_false_positive: bool
     fp_reason: str | None
+    fp_masking_suspected: bool = False
     created_at: datetime
 
 
@@ -190,6 +192,7 @@ class IncidentRead(_OrmBase):
     fired_correlation_rule: str | None
     auto_classification: str
     auto_classification_reason: str
+    fp_masking_warning: bool = False
     risk_score: RiskScoreRead | None
     bob_analysis: BobAnalysisRead | None
     bluf_summary: BlufSummaryRead | None
@@ -225,4 +228,5 @@ class DashboardStats(BaseModel):
     false_positive_count: int
     unclassified_count: int
     false_positive_rate: float  # 0.0–1.0
+    fp_masking_alerts: int = 0   # alerts suspected of FP masking
     last_feed_run: FeedRunRead | None

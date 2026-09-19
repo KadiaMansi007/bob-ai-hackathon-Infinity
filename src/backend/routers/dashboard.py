@@ -36,6 +36,11 @@ def get_stats(db: Session = Depends(get_db)):
 
     fp_rate = round(false_pos / total_incidents, 3) if total_incidents > 0 else 0.0
 
+    # Count alerts suspected of FP masking (new C6 detection)
+    fp_masking_alerts = db.query(func.count(NormalisedAlert.id)).filter(
+        NormalisedAlert.fp_masking_suspected == True  # noqa: E712
+    ).scalar() or 0
+
     last_run = db.query(FeedRun).order_by(FeedRun.started_at.desc()).first()
 
     return {
@@ -47,6 +52,7 @@ def get_stats(db: Session = Depends(get_db)):
         "false_positive_count": false_pos,
         "unclassified_count": unclassified,
         "false_positive_rate": fp_rate,
+        "fp_masking_alerts": fp_masking_alerts,
         "last_feed_run": {
             "id": last_run.id,
             "scenario": last_run.scenario,

@@ -61,6 +61,18 @@ def classify_incident(session: Session, incident: Incident) -> Incident:
 
     rule = incident.fired_correlation_rule or "C0"
 
+    # --- GT-C6: FP Masking attack -----------------------------------------
+    if rule == "C6":
+        incident.auto_classification = AutoClassification.GENUINE_THREAT.value
+        incident.auto_classification_reason = (
+            "gt_fp_masking_attack: Correlation rule C6 (FP Masking Detection) fired — "
+            "multiple alerts were individually crafted to appear as false positives, "
+            "but their cumulative pattern on the same asset/IP reveals a genuine threat. "
+            "This is a deliberate threshold-evasion technique."
+        )
+        incident.fp_masking_warning = True
+        return incident
+
     # --- GT-01: IOC-based correlation ------------------------------------
     if rule == "C2":
         incident.auto_classification = AutoClassification.GENUINE_THREAT.value

@@ -120,6 +120,26 @@ export default function IncidentDetail() {
         </div>
       </div>
 
+      {/* ── FP Masking Warning Banner (Rule C6) ── */}
+      {inc.fp_masking_warning && (
+        <div className="flex items-start gap-3 bg-red-900/25 border border-red-500/60 rounded-lg px-4 py-4">
+          <span className="text-red-400 text-2xl mt-0.5">🎭</span>
+          <div>
+            <div className="text-red-300 font-bold text-sm mb-1">FP MASKING ATTACK DETECTED — Rule C6</div>
+            <p className="text-red-200 text-sm leading-relaxed">
+              The alerts in this incident were individually crafted to appear as false positives
+              (low confidence, low severity, single events) — but their cumulative pattern on the
+              same asset or IP reveals a genuine intrusion attempt. The attacker knew your detection
+              thresholds and deliberately stayed below them.
+            </p>
+            <div className="mt-2 text-xs text-red-300/70">
+              Correlation Rule C6 (FP Masking Detection) fired — each alert alone = false positive,
+              but together = genuine threat. Do not dismiss these as noise.
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Analyst Workflow Steps (Point 11) ── */}
       <Card>
         <SectionHeading>🔎 Analyst Workflow</SectionHeading>

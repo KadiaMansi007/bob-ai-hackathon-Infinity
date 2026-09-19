@@ -19,6 +19,26 @@ export default function AlertDetail() {
         <SourceBadge sourceType={data.source_type} />
       </div>
 
+      {/* FP Masking suspected warning */}
+      {data.is_false_positive && data.fp_masking_suspected && (
+        <div className="flex items-start gap-3 bg-orange-900/20 border border-orange-500/60 rounded-lg px-4 py-3">
+          <span className="text-orange-400 text-lg mt-0.5">⚠</span>
+          <div>
+            <div className="text-orange-300 font-bold text-sm mb-1">FP Masking Suspected</div>
+            <p className="text-orange-200 text-sm leading-relaxed">
+              This alert was marked as a <strong>False Positive</strong> by the pre-filter rules —
+              but its source IP or target asset appears in a cluster of similarly crafted FP alerts.
+              This pattern suggests the attacker deliberately kept each alert below detection thresholds
+              to avoid triggering genuine threat classification.
+            </p>
+            <p className="text-orange-300/70 text-xs mt-1">
+              Rule C6 (FP Masking Detection) has flagged the containing incident as a Genuine Threat.
+              Do not dismiss this alert as harmless noise.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-4">
         <Card>
           <SectionHeading>Alert Details</SectionHeading>

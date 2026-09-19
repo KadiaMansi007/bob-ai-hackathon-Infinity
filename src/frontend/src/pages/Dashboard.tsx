@@ -86,6 +86,22 @@ export default function Dashboard() {
         ))}
       </div>
 
+      {/* FP Masking warning — shown when masking attacks detected */}
+      {(s.fp_masking_alerts ?? 0) > 0 && (
+        <div className="flex items-center gap-3 bg-red-900/20 border border-red-600/60 rounded-lg px-4 py-3">
+          <span className="text-red-400 text-lg">🎭</span>
+          <div className="flex-1">
+            <span className="text-red-300 font-semibold text-sm">FP MASKING ATTACK DETECTED — </span>
+            <span className="text-red-200 text-sm">
+              {s.fp_masking_alerts} alert{s.fp_masking_alerts !== 1 ? 's' : ''} were deliberately crafted to appear as false positives but their cumulative pattern reveals a genuine threat. Rule C6 flagged this.
+            </span>
+          </div>
+          <Link to="/incidents" className="text-xs text-red-400 border border-red-600/50 rounded px-2 py-1 hover:bg-red-900/30 shrink-0">
+            Investigate →
+          </Link>
+        </div>
+      )}
+
       {/* Charts row */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card>

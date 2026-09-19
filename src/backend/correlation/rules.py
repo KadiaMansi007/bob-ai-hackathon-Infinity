@@ -212,6 +212,75 @@ def match_c1(session: Session, alert: NormalisedAlert) -> RuleResult:
 
 
 # ---------------------------------------------------------------------------
+# Rule C6 — FP Masking Detection
+# Attacker deliberately keeps each alert below FP thresholds (low confidence,
+# single event, low severity) but the cumulative pattern across the same IP
+# or target asset reveals genuine malicious activity.
+# Triggers when: 3+ FP-marked alerts share the same src_ip OR target_asset
+# within a 60-minute window.
+# ---------------------------------------------------------------------------
+def match_c6(session: Session, alert: NormalisedAlert) -> RuleResult:
+    """
+    FP Masking: look at FP-flagged alerts (normally ignored) for same IP/asset clusters.
+    If an attacker deliberately crafted alerts to hit FP rules, they'll share the same
+    source IP or target asset — revealing the pattern.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(minutes=60)
+
+    # Collect identifiers from this alert to match against
+    src_ip = alert.raw_payload.get("src_ip") or alert.raw_payload.get("dst_ip")
+    target = alert.target_asset
+
+    # Query FP-flagged alerts in the last 60 min (the ones normally excluded)
+    fp_alerts = (
+        session.query(NormalisedAlert)
+        .filter(
+            NormalisedAlert.timestamp >= cutoff,
+            NormalisedAlert.is_false_positive == True,  # noqa: E712 — intentional
+            NormalisedAlert.id != alert.id,
+        )
+        .all()
+    )
+
+    # Count FP alerts sharing the same target_asset
+    asset_matches = [a for a in fp_alerts if a.target_asset == target]
+
+    # Count FP alerts sharing the same src_ip (if present)
+    ip_matches: list[NormalisedAlert] = []
+    if src_ip:
+        for a in fp_alerts:
+            a_ip = a.raw_payload.get("src_ip") or a.raw_payload.get("dst_ip")
+            if a_ip and a_ip == src_ip:
+                ip_matches.append(a)
+
+    # Threshold: 3 or more FP alerts with same asset or same IP = masking pattern
+    if len(asset_matches) >= 3:
+        # Tag each FP alert as masking-suspected
+        for a in asset_matches:
+            a.fp_masking_suspected = True
+        alert.fp_masking_suspected = True
+        return RuleResult(
+            True, "C6",
+            f"FP Masking detected: {len(asset_matches)} FP-flagged alerts share "
+            f"target asset '{target}' within 60 min — attacker likely keeping "
+            f"individual alerts below detection thresholds."
+        )
+
+    if len(ip_matches) >= 3:
+        for a in ip_matches:
+            a.fp_masking_suspected = True
+        alert.fp_masking_suspected = True
+        return RuleResult(
+            True, "C6",
+            f"FP Masking detected: {len(ip_matches)} FP-flagged alerts share "
+            f"source IP '{src_ip}' within 60 min — cumulative pattern indicates "
+            f"deliberate threshold evasion."
+        )
+
+    return RuleResult(False, "C6", "")
+
+
+# ---------------------------------------------------------------------------
 # Rule C0 — Default (same geo-region, 3+ alerts within 30 min)
 # ---------------------------------------------------------------------------
 def match_c0(session: Session, alert: NormalisedAlert) -> RuleResult:
@@ -239,9 +308,10 @@ def match_c0(session: Session, alert: NormalisedAlert) -> RuleResult:
 
 
 # ---------------------------------------------------------------------------
-# Rule evaluation — priority order: C5 > C4 > C3 > C2 > C1 > C0
+# Rule evaluation — priority order: C6 > C5 > C4 > C3 > C2 > C1 > C0
+# C6 runs first so FP-masking attacks are caught before normal rules skip FP alerts
 # ---------------------------------------------------------------------------
-RULES_ORDERED = [match_c5, match_c4, match_c3, match_c2, match_c1, match_c0]
+RULES_ORDERED = [match_c6, match_c5, match_c4, match_c3, match_c2, match_c1, match_c0]
 
 
 def evaluate_rules(session: Session, alert: NormalisedAlert) -> RuleResult:

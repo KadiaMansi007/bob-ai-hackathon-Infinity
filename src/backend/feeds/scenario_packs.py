@@ -313,4 +313,99 @@ SCENARIO_PACKS: list[dict] = [
             },
         ],
     },
+    # ------------------------------------------------------------------
+    # SCENARIO 6 — FP Masking Attack
+    # Attacker deliberately keeps confidence low, event_count=1, severity=LOW
+    # so each alert individually gets marked FALSE POSITIVE by FP rules.
+    # But 4+ alerts share the same target_asset — Rule C6 catches the pattern.
+    # auto_classification: GENUINE_THREAT (C6 — fp_masking_attack)
+    # ------------------------------------------------------------------
+    {
+        "name": "fp_masking_attack",
+        "description": "Attacker deliberately crafts alerts to appear as false positives individually, masking a real intrusion campaign",
+        "expected_rule": "C6",
+        "expected_classification": "GENUINE_THREAT",
+        "time_spread": 3500,
+        "alerts": [
+            {
+                "source_type": "SIEM",
+                "alert_type": "failed_login_burst",
+                "severity": "LOW",
+                "confidence": 0.12,
+                "target_asset": "srv-masked-01",
+                "geo_location": "EU-CENTRAL",
+                "description": "Single failed login on srv-masked-01 — appears to be user error.",
+                "extra": {
+                    "user_id": "svc_backup",
+                    "hostname": "srv-masked-01",
+                    "event_count": 1,
+                    "distinct_usernames": 1,
+                    "spray": False,
+                    "src_ip": "198.51.100.42",
+                },
+            },
+            {
+                "source_type": "SIEM",
+                "alert_type": "failed_login_burst",
+                "severity": "LOW",
+                "confidence": 0.13,
+                "target_asset": "srv-masked-01",
+                "geo_location": "EU-CENTRAL",
+                "description": "Another single failed login on srv-masked-01 — low confidence.",
+                "extra": {
+                    "user_id": "svc_monitor",
+                    "hostname": "srv-masked-01",
+                    "event_count": 1,
+                    "distinct_usernames": 1,
+                    "spray": False,
+                    "src_ip": "198.51.100.42",
+                },
+            },
+            {
+                "source_type": "CYBER_SENSOR",
+                "alert_type": "port_scan",
+                "severity": "LOW",
+                "confidence": 0.11,
+                "target_asset": "srv-masked-01",
+                "geo_location": "EU-CENTRAL",
+                "description": "Minimal port scan from 198.51.100.42 — low packet count, likely noise.",
+                "extra": {
+                    "src_ip": "198.51.100.42",
+                    "dst_ip": "10.0.5.10",
+                    "protocol": "TCP",
+                    "packet_count": 3,
+                },
+            },
+            {
+                "source_type": "CYBER_SENSOR",
+                "alert_type": "port_scan",
+                "severity": "LOW",
+                "confidence": 0.10,
+                "target_asset": "srv-masked-01",
+                "geo_location": "EU-CENTRAL",
+                "description": "Very low-confidence port activity on srv-masked-01.",
+                "extra": {
+                    "src_ip": "198.51.100.42",
+                    "dst_ip": "10.0.5.10",
+                    "protocol": "TCP",
+                    "packet_count": 2,
+                },
+            },
+            {
+                "source_type": "INTEL_REPORT",
+                "alert_type": "ioc_match",
+                "severity": "LOW",
+                "confidence": 0.14,
+                "target_asset": "srv-masked-01",
+                "geo_location": "EU-CENTRAL",
+                "description": "Weak IOC signal for srv-masked-01 — below corroboration threshold.",
+                "extra": {
+                    "ioc_type": "ip",
+                    "ioc_value": "198.51.100.42",
+                    "actor_name": None,
+                    "cve_id": None,
+                },
+            },
+        ],
+    },
 ]

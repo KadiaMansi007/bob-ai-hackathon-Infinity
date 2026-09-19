@@ -85,6 +85,13 @@ class NormalisedAlert(Base):
     # Reason code e.g. "fp_low_confidence", "fp_satellite_weak_signal"
     fp_reason: Mapped[str | None] = mapped_column(String(64), nullable=True)
 
+    # --- FP Masking detection --------------------------------------------
+    # Set to True if this alert was marked FP but its IP/asset appears in a
+    # cluster of FP-marked alerts — indicating deliberate FP masking by attacker
+    fp_masking_suspected: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, index=True
+    )
+
     # --- Relationships ---------------------------------------------------
     raw_alert: Mapped["RawAlert"] = relationship(
         "RawAlert", back_populates="normalised_alert"

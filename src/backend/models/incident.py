@@ -135,6 +135,13 @@ class Incident(Base):
         Text, nullable=False, default=""
     )
 
+    # --- FP Masking flag -------------------------------------------------
+    # Set to True when C6 fires — attacker deliberately kept alerts below FP
+    # thresholds but cumulative pattern reveals genuine threat
+    fp_masking_warning: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, index=True
+    )
+
     # --- Relationships ---------------------------------------------------
     alert_links: Mapped[list["IncidentAlert"]] = relationship(
         "IncidentAlert", back_populates="incident",
