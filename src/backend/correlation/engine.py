@@ -2,7 +2,7 @@
 Correlation engine — main entry point.
 
 For each NormalisedAlert:
-1. Evaluate rules C5→C0 (priority order)
+1. Evaluate rules C6→C5→C0 (priority order)
 2. Find or create an Incident
 3. Return the Incident
 """
@@ -12,7 +12,7 @@ import logging
 from sqlalchemy.orm import Session
 
 from backend.models import NormalisedAlert, Incident
-from backend.correlation.rules import evaluate_rules
+from backend.correlation.rules import evaluate_rules, match_c6
 from backend.correlation.incident_builder import (
     create_incident, extend_incident, find_open_incident_for_asset
 )
@@ -29,8 +29,24 @@ def correlate(session: Session, alert: NormalisedAlert) -> Incident:
     Returns the Incident (flushed, not committed).
     """
     if alert.is_false_positive:
-        # FP alerts still get correlated (into FP incidents) but don't
-        # trigger rule evaluation — they use C0 as the default.
+        # FP alerts: run C6 FIRST — attacker may be masking behind FP thresholds
+        c6_result = match_c6(session, alert)
+        if c6_result.matched:
+            log.info(
+                "Rule C6 fired on FP alert %s — FP masking detected: %s",
+                alert.id, c6_result.reason
+            )
+            existing = find_open_incident_for_asset(session, alert.target_asset)
+            if existing:
+                existing.fired_correlation_rule = "C6"
+                existing.correlation_reason = c6_result.reason
+                existing.fp_masking_warning = True
+                return extend_incident(session, existing, alert)
+            inc = create_incident(session, alert, "C6", c6_result.reason)
+            inc.fp_masking_warning = True
+            return inc
+
+        # Normal FP — not masking, just genuine noise
         existing = find_open_incident_for_asset(session, alert.target_asset)
         if existing:
             return extend_incident(session, existing, alert)

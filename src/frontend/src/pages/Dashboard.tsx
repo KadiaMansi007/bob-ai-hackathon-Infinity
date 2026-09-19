@@ -86,17 +86,25 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* FP Masking warning — shown when masking attacks detected */}
+      {/* FP Masking warning — ONLY shown when C6 rule specifically detected masking */}
       {(s.fp_masking_alerts ?? 0) > 0 && (
-        <div className="flex items-center gap-3 bg-red-900/20 border border-red-600/60 rounded-lg px-4 py-3">
-          <span className="text-red-400 text-lg">🎭</span>
+        <div className="flex items-start gap-3 bg-red-900/20 border border-red-600/60 rounded-lg px-4 py-4">
+          <span className="text-red-400 text-2xl">🎭</span>
           <div className="flex-1">
-            <span className="text-red-300 font-semibold text-sm">FP MASKING ATTACK DETECTED — </span>
-            <span className="text-red-200 text-sm">
-              {s.fp_masking_alerts} alert{s.fp_masking_alerts !== 1 ? 's' : ''} were deliberately crafted to appear as false positives but their cumulative pattern reveals a genuine threat. Rule C6 flagged this.
-            </span>
+            <div className="text-red-300 font-bold text-sm mb-1">
+              FP MASKING ATTACK DETECTED — Rule C6
+            </div>
+            <p className="text-red-200 text-sm leading-relaxed">
+              {s.fp_masking_alerts} alert{s.fp_masking_alerts !== 1 ? 's' : ''} were deliberately crafted
+              to appear as false positives — but their cumulative pattern on the same asset/IP reveals
+              a genuine intrusion attempt. The attacker knew the detection thresholds and deliberately
+              stayed below them.
+            </p>
+            <p className="text-red-300/70 text-xs mt-1">
+              Correlation Rule C6 fired — each alert alone = false positive, together = genuine threat.
+            </p>
           </div>
-          <Link to="/incidents" className="text-xs text-red-400 border border-red-600/50 rounded px-2 py-1 hover:bg-red-900/30 shrink-0">
+          <Link to="/incidents" className="text-xs text-red-400 border border-red-600/50 rounded px-2 py-1 hover:bg-red-900/30 shrink-0 mt-1">
             Investigate →
           </Link>
         </div>

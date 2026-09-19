@@ -17,6 +17,7 @@ def list_alerts(
     severity: str | None = None,
     source_type: str | None = None,
     is_false_positive: bool | None = None,
+    fp_masking_suspected: bool | None = None,
     db: Session = Depends(get_db),
 ):
     q = db.query(NormalisedAlert)
@@ -26,6 +27,8 @@ def list_alerts(
         q = q.filter(NormalisedAlert.source_type == source_type.upper())
     if is_false_positive is not None:
         q = q.filter(NormalisedAlert.is_false_positive == is_false_positive)
+    if fp_masking_suspected is not None:
+        q = q.filter(NormalisedAlert.fp_masking_suspected == fp_masking_suspected)
     total = q.count()
     alerts = q.order_by(NormalisedAlert.timestamp.desc()).offset((page - 1) * page_size).limit(page_size).all()
     return {
@@ -75,6 +78,7 @@ def _alert_summary(a: NormalisedAlert) -> dict:
         "geo_location": a.geo_location,
         "is_false_positive": a.is_false_positive,
         "fp_reason": a.fp_reason,
+        "fp_masking_suspected": getattr(a, 'fp_masking_suspected', False),
         "created_at": a.created_at.isoformat(),
     }
 

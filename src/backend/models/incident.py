@@ -14,7 +14,7 @@ from datetime import datetime
 
 from sqlalchemy import (
     DateTime, ForeignKey, Index, Integer,
-    String, Text, JSON,
+    String, Text, JSON, Boolean,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 

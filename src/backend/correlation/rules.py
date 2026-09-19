@@ -225,7 +225,7 @@ def match_c6(session: Session, alert: NormalisedAlert) -> RuleResult:
     If an attacker deliberately crafted alerts to hit FP rules, they'll share the same
     source IP or target asset — revealing the pattern.
     """
-    cutoff = datetime.now(timezone.utc) - timedelta(minutes=60)
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=12)
 
     # Collect identifiers from this alert to match against
     src_ip = alert.raw_payload.get("src_ip") or alert.raw_payload.get("dst_ip")
@@ -253,28 +253,38 @@ def match_c6(session: Session, alert: NormalisedAlert) -> RuleResult:
             if a_ip and a_ip == src_ip:
                 ip_matches.append(a)
 
-    # Threshold: 3 or more FP alerts with same asset or same IP = masking pattern
-    if len(asset_matches) >= 3:
-        # Tag each FP alert as masking-suspected
+    # Threshold: 2+ FP alerts with same asset OR same IP = masking pattern
+    # Also combine: if total related FP alerts (asset + ip) >= 2, flag it
+    related = list({a.id: a for a in asset_matches + ip_matches}.values())
+
+    if len(asset_matches) >= 2:
         for a in asset_matches:
             a.fp_masking_suspected = True
         alert.fp_masking_suspected = True
         return RuleResult(
             True, "C6",
             f"FP Masking detected: {len(asset_matches)} FP-flagged alerts share "
-            f"target asset '{target}' within 60 min — attacker likely keeping "
-            f"individual alerts below detection thresholds."
+            f"target asset '{target}' — attacker keeping alerts below detection thresholds."
         )
 
-    if len(ip_matches) >= 3:
+    if len(ip_matches) >= 2:
         for a in ip_matches:
             a.fp_masking_suspected = True
         alert.fp_masking_suspected = True
         return RuleResult(
             True, "C6",
             f"FP Masking detected: {len(ip_matches)} FP-flagged alerts share "
-            f"source IP '{src_ip}' within 60 min — cumulative pattern indicates "
-            f"deliberate threshold evasion."
+            f"source IP '{src_ip}' — cumulative pattern indicates deliberate threshold evasion."
+        )
+
+    if len(related) >= 3:
+        for a in related:
+            a.fp_masking_suspected = True
+        alert.fp_masking_suspected = True
+        return RuleResult(
+            True, "C6",
+            f"FP Masking detected: {len(related)} FP-flagged alerts linked by "
+            f"asset/IP pattern '{target}' — deliberate threshold evasion suspected."
         )
 
     return RuleResult(False, "C6", "")
